@@ -44,7 +44,7 @@ import BaseButton from "./BaseButton.vue";
 import BaseInput from "./BaseInput.vue";
 import BaseMessage from "./BaseMessage.vue";
 import ConfirmationModal from "./ConfirmationModel.vue";
-import EventBus from "../eventBus";
+import NavigationMixin from "../mixins/HomeNavigation";
 export default {
   name: "CompareText",
   components: {
@@ -53,6 +53,7 @@ export default {
     BaseMessage,
     ConfirmationModal,
   },
+  mixins: [NavigationMixin],
   data() {
     return {
       compareText: "",
@@ -94,7 +95,6 @@ export default {
       }
     },
     handleConfirmAdd() {
-      const textToAdd = this.compareText;
       this.showConfirmModal = false;
       //approach - 1 - query params
       // const textToAdd = this.compareText;
@@ -108,12 +108,7 @@ export default {
       // setTimeout(() => {
       //   EventBus.$emit("text-to-add", textToAdd);
       // }, 100);
-
-      this.$router.push("/").then(() => {
-        this.$nextTick(() => {
-          EventBus.$emit("text-to-add", textToAdd);
-        });
-      });
+      this.navigateHomeWithText(this.compareText);
 
       // nextTick
       // Vue-specific method that waits for the next DOM update cycle

@@ -1,5 +1,5 @@
 module.exports = {
-  purge: ["./public/**/*.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
+  purge: [],
   darkMode: false, // or 'media' or 'class'
   theme: {
     extend: {},
@@ -9,3 +9,5 @@ module.exports = {
   },
   plugins: [],
 };
+// Purge tells Tailwind which files to scan for class names, so it can
+// remove unused CSS when building for production.

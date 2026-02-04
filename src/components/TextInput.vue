@@ -69,6 +69,7 @@ import TextDisplay from "./TextDisplay.vue";
 import EventBus from "../eventBus.js";
 import IndexRetriever from "./IndexRetriever.vue";
 import ConfirmationModal from "./ConfirmationModel.vue";
+import { fetchCachedUsers } from "../utilities/users";
 // shub patel
 
 export default {
@@ -86,23 +87,36 @@ export default {
       default: "",
     },
   },
+  data() {
+    return {
+      inputText: this.initialText,
+      showConfirmModal: false,
+      loading: false,
+      error: null,
+    };
+  },
   //beforeMount also works , but beforeMount is used when we need to tweek data right before
   // rendering  , but we are performing side effects and changing the component state by
   // listening to gloabl events .
-  created() {
+  async created() {
     EventBus.$on("text-to-add", (text) => {
       this.inputText = text;
     });
     EventBus.$on("text-retrieved", (text) => {
       this.inputText = text;
     });
+    try {
+      this.users = await fetchCachedUsers();
+    } catch (e) {
+      console.log("error");
+    }
+    this.users.forEach((user) => {
+      if (user?.name) {
+        this.addText(user.name);
+      }
+    });
   },
-  data() {
-    return {
-      inputText: this.initialText,
-      showConfirmModal: false,
-    };
-  },
+
   // Whenever the store's state changes, this computed property will automatically update
   computed: {
     ...mapGetters("text", {

@@ -12,13 +12,16 @@
     </div>
 
     <div v-else>
-      <div class="mb-4">
+      <div>
         <BaseInput
           v-model="searchTerm"
           placeholder="Search users..."
-          class="w-full"
+          class="w-full mb-2"
         />
       </div>
+      <BaseButton class="ml-80 mb-2" type="button" @click="loadUsers(true)"
+        >Fetch Latest</BaseButton
+      >
 
       <div class="space-y-3">
         <div
@@ -80,11 +83,13 @@
 <script>
 import BaseButton from "./BaseButton.vue";
 import BaseInput from "./BaseInput.vue";
-import dataService from "../services/dataService";
 import ConfirmationModal from "./ConfirmationModel.vue";
 import { mapActions } from "vuex";
+import NavigationMixin from "../mixins/HomeNavigation";
+import { fetchCachedUsers } from "../utilities/users";
 export default {
   name: "UserList",
+  mixins: [NavigationMixin],
   components: {
     BaseButton,
     BaseInput,
@@ -97,7 +102,6 @@ export default {
       error: null,
       selectedUser: null,
       searchTerm: "",
-      showConfirmModal: false,
       userToSave: null,
     };
   },
@@ -111,21 +115,25 @@ export default {
       );
     },
   },
-  mounted() {
-    this.fetchUsers();
+  async mounted() {
+    await this.loadUsers(); // initial load
   },
   methods: {
     ...mapActions("text", ["addText"]),
-    async fetchUsers() {
+
+    async loadUsers(forceRefresh = false) {
       this.loading = true;
       this.error = null;
-
+      console.log;
       try {
-        const data = await dataService.getUsers();
-        this.users = data;
-      } catch (error) {
-        this.error = "Failed to load users. Please try again.";
-        console.error(error);
+        this.users = await fetchCachedUsers(forceRefresh);
+
+        // Add each user name to text store
+        this.users.forEach((user) => {
+          if (user?.name) this.addText(user.name);
+        });
+      } catch (e) {
+        this.error = "Failed to load users";
       } finally {
         this.loading = false;
       }
@@ -144,10 +152,8 @@ export default {
     },
     saveUserToStore() {
       if (this.userToSave) {
-        this.addText(this.userToSave.name);
-        alert(`${this.userToSave.name} has been saved to the store!`);
         this.showConfirmModal = false;
-        this.userToSave = null;
+        this.navigateHomeWithText(this.userToSave.name);
       }
     },
     cancelSaveUser() {

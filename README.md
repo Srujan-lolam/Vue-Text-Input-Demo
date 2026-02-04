@@ -98,3 +98,14 @@ fetch vs axios
 2. we must mansually convert res to JSON while axios automatically transforms to JSON
 3. HTTP error like 404 ,500 need to be manually checked for fetch ,axios automatically rejects these errors - axios has built in error handling
 4. axios - requires less boiler plate and works everywhere , use axios for large industry ready applications , use fetch for small development projects
+
+//we can reuse a function across multiple components using below possible ways
+
+1. share utitlity function
+2. create a vuex action
+3. navigation mixin
+
+Cache storage at component level - exists till component page is not unmounted
+cache storage at service level - can use the data cross different component until expired
+cache with session - until tab closed
+cache with storage - even if browser closed , cache still exists .
