@@ -12,13 +12,27 @@
 
     <div>
       <div class="space-y-4">
-        <div>
-          <!-- Input field with styling -->
+        <div class="relative">
           <BaseInput
             v-model="inputText"
             placeholder="Type something..."
             @keyup.enter="submitText"
           />
+
+          <!-- Recommendations dropdown -->
+          <ul
+            v-if="filteredRecommendations.length > 0 && showRecommendations"
+            class="absolute z-10 w-full bg-white border border-gray-200 rounded shadow-md mt-1 max-h-40 overflow-auto"
+          >
+            <li
+              v-for="(rec, index) in filteredRecommendations"
+              :key="index"
+              @click="selectRecommendation(rec)"
+              class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+            >
+              {{ rec }}
+            </li>
+          </ul>
         </div>
 
         <!-- Buttons in horizontal layout with spacing -->
@@ -93,6 +107,7 @@ export default {
       showConfirmModal: false,
       loading: false,
       error: null,
+      showRecommendations: false,
     };
   },
   //beforeMount also works , but beforeMount is used when we need to tweek data right before
@@ -116,17 +131,31 @@ export default {
       }
     });
   },
+  watch: {
+    inputText() {
+      this.showRecommendations = true; // show dropdown when typing
+    },
+  },
 
   // Whenever the store's state changes, this computed property will automatically update
   computed: {
     ...mapGetters("text", {
       submittedTexts: "getAllTexts",
     }),
+    filteredRecommendations() {
+      if (!this.inputText) return [];
+      const inputLower = this.inputText.toLowerCase();
+      return this.submittedTexts.filter(
+        (text) => text.toLowerCase().includes(inputLower),
+        // text.toLowerCase() !== inputLower,
+      );
+    },
 
     // submittedTexts(){
     //   return this.$store.getters.getAllTexts()
     // }
   },
+
   // Reactivity to External Changes:  we are using watcher here bcoz we need side effetc when the prop
   //  value changes , computed don't perform side effects , methods don't even run when the props changes
   // we need to explicity run the methods
@@ -141,6 +170,10 @@ export default {
     ...mapMutations("text", ["REMOVE_TEXT"]),
     goToComparePage() {
       this.$router.push("/compare");
+    },
+    selectRecommendation(rec) {
+      this.inputText = rec;
+      this.showRecommendations = false;
     },
     submitText() {
       if (this.inputText.trim()) {
