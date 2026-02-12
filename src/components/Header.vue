@@ -31,8 +31,8 @@
             </router-link>
           </li>
           <li>
-            <router-link to="/login" class="text-gray-600 hover:text-blue-600">
-              Login/Logout
+            <router-link to="/SignUp" class="text-gray-600 hover:text-blue-600">
+              SignUp
             </router-link>
           </li>
         </ul>

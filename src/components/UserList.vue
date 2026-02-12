@@ -84,9 +84,8 @@
 import BaseButton from "./BaseButton.vue";
 import BaseInput from "./BaseInput.vue";
 import ConfirmationModal from "./ConfirmationModel.vue";
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 import NavigationMixin from "../mixins/HomeNavigation";
-import { fetchCachedUsers } from "../utilities/users";
 export default {
   name: "UserList",
   mixins: [NavigationMixin],
@@ -97,55 +96,37 @@ export default {
   },
   data() {
     return {
-      users: [],
-      loading: false,
-      error: null,
       selectedUser: null,
       searchTerm: "",
       userToSave: null,
     };
   },
   computed: {
+    ...mapGetters("text", ["users", "loading", "error"]),
+
     filteredUsers() {
       if (!this.searchTerm) return this.users;
-
-      const term = this.searchTerm.toLowerCase();
-      return this.users.filter((user) =>
-        user.name.toLowerCase().includes(term),
+      return this.users.filter((u) =>
+        u.name.toLowerCase().includes(this.searchTerm.toLowerCase()),
       );
     },
   },
+
   async mounted() {
-    await this.loadUsers(); // initial load
+    this.fetchUsers(); // initial load
   },
   methods: {
-    ...mapActions("text", ["addText"]),
+    ...mapActions("text", ["fetchUsers"]),
 
-    async loadUsers(forceRefresh = false) {
-      this.loading = true;
-      this.error = null;
-      console.log;
-      try {
-        this.users = await fetchCachedUsers(forceRefresh);
-
-        // Add each user name to text store
-        this.users.forEach((user) => {
-          if (user?.name) this.addText(user.name);
-        });
-      } catch (e) {
-        this.error = "Failed to load users";
-      } finally {
-        this.loading = false;
-      }
+    loadUsers(forceRefresh = false) {
+      this.fetchUsers(forceRefresh);
+      this.$store.commit("text/SET_API_LOADED", false);
     },
 
     showUserDetails(user) {
-      if (this.selectedUser && this.selectedUser.id === user.id) {
-        this.selectedUser = null;
-      } else {
-        this.selectedUser = user;
-      }
+      this.selectedUser = this.selectedUser?.id === user.id ? null : user;
     },
+
     confirmSaveUser(user) {
       this.userToSave = user;
       this.showConfirmModal = true;

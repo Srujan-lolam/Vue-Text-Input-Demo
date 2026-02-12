@@ -4,6 +4,8 @@ import VueRouter from "vue-router";
 import TextInputPage from "../views/TextInputPage.vue";
 import CompareTextPage from "../views/CompareTextPage.vue";
 import UserDirectory from "../views/UserDirectory.vue";
+import AboutUs from "../components/AboutUs";
+import SignUp from "../components/SignUp";
 Vue.use(VueRouter);
 //registers vuerouter as a plugin so that we can use access routing features across our app
 
@@ -26,6 +28,14 @@ const routes = [
     path: "/users",
     name: "Users",
     component: UserDirectory,
+  },
+  {
+    path: "/about",
+    component: AboutUs,
+  },
+  {
+    path: "/signUp",
+    component: SignUp,
   },
 ];
 

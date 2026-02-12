@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mt-12">
+  <div class="max-w-lg mx-auto bg-white rounded-lg shadow-md p-6 mt-12">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-gray-800">Text Input Demo</h1>
       <!-- <p class="text-gray-600">Enter text and store it in Vuex</p> -->
@@ -57,10 +57,41 @@
             :key="index"
             class="flex justify-between items-center p-2 bg-gray-50 rounded"
           >
-            <span>{{ text }}</span>
-            <BaseButton type="button" @click="deleteText(index)">
-              Delete
-            </BaseButton>
+            <!-- View mode -->
+            <span v-if="editingIndex !== index">{{ text }}</span>
+
+            <!-- Edit mode -->
+            <BaseInput v-else v-model="editedText" class="w-full mr-2" />
+
+            <div class="flex space-x-2">
+              <!-- Update -->
+              <BaseButton
+                v-if="editingIndex !== index"
+                type="button"
+                @click="startEdit(index, text)"
+              >
+                Update
+              </BaseButton>
+
+              <!-- Save -->
+              <BaseButton v-else type="button" @click="saveEdit(index)">
+                Save
+              </BaseButton>
+
+              <!-- Cancel -->
+              <BaseButton
+                v-if="editingIndex === index"
+                type="button"
+                @click="cancelEdit"
+              >
+                Cancel
+              </BaseButton>
+
+              <!-- Delete -->
+              <BaseButton type="button" @click="deleteText(index)">
+                Delete
+              </BaseButton>
+            </div>
           </li>
         </ul>
       </div>
@@ -108,6 +139,9 @@ export default {
       loading: false,
       error: null,
       showRecommendations: false,
+      apiDataLoaded: false,
+      editingIndex: null,
+      editedText: "",
     };
   },
   //beforeMount also works , but beforeMount is used when we need to tweek data right before
@@ -120,16 +154,21 @@ export default {
     EventBus.$on("text-retrieved", (text) => {
       this.inputText = text;
     });
-    try {
-      this.users = await fetchCachedUsers();
-    } catch (e) {
-      console.log("error");
-    }
-    this.users.forEach((user) => {
-      if (user?.name) {
-        this.addText(user.name);
+    if (!this.$store.getters["text/isApiDataLoaded"]) {
+      try {
+        this.users = await fetchCachedUsers();
+        const existing = new Set(this.submittedTexts);
+        this.users.forEach((user) => {
+          if (user?.name && !existing.has(user.name)) {
+            existing.add(user.name);
+            this.addText(user.name);
+          }
+        });
+        this.$store.commit("text/SET_API_LOADED", true);
+      } catch (e) {
+        console.log("error");
       }
-    });
+    }
   },
   watch: {
     inputText() {
@@ -167,7 +206,7 @@ export default {
   // },
   methods: {
     ...mapActions("text", ["addText", "removeText"]),
-    ...mapMutations("text", ["REMOVE_TEXT"]),
+    ...mapMutations("text", ["REMOVE_TEXT", "UPDATE_TEXT"]),
     goToComparePage() {
       this.$router.push("/compare");
     },
@@ -212,11 +251,41 @@ export default {
         (this.resultMessage = "Storing to store operation was canceled"),
         (this.messageType = "info");
     },
-  },
-  beforeDestroy() {
-    // Clean up the event listener when the component is destroyed
-    EventBus.$off("text-to-add");
-    EventBus.$off("text-retrieved");
+    startEdit(index, text) {
+      this.editingIndex = index;
+      this.editedText = text;
+    },
+
+    saveEdit(index) {
+      if (!this.editedText.trim()) return;
+
+      const duplicate = this.submittedTexts.some(
+        (text, i) =>
+          i !== index && text.toLowerCase() === this.editedText.toLowerCase(),
+      );
+
+      if (duplicate) {
+        this.showConfirmModal = true;
+      }
+
+      this.UPDATE_TEXT({
+        index,
+        newValue: this.editedText,
+      });
+
+      this.cancelEdit();
+    },
+
+    cancelEdit() {
+      this.editingIndex = null;
+      this.editedText = "";
+    },
+
+    beforeDestroy() {
+      // Clean up the event listener when the component is destroyed
+      EventBus.$off("text-to-add");
+      EventBus.$off("text-retrieved");
+    },
   },
 };
 </script>
